@@ -26,20 +26,33 @@
 
         <div id="quizArea" class="quiz-area" style="display: none;">
             
-            <div class="timer-container">
+            <div class="timer-container" id="timerWrapper">
                 <div id="timerBar" class="timer-bar"></div>
             </div>
 
-            <div id="flashcard" class="flashcard">
+            <div id="flashcard" class="flashcard" style="cursor: pointer;">
                 <div id="questionHint" class="question-hint">Menebak Arti</div>
                 <div id="questionText" class="question-text">準備中</div>
+                <div id="flashcardAnswer" class="flashcard-answer" style="display: none;">
+                    <hr>
+                    <p id="answerHiragana" style="color: var(--neon-pink); font-size: 1.5rem;"></p>
+                    <p id="answerArti" style="color: var(--neon-cyan); font-size: 1.2rem;"></p>
+                </div>
             </div>
 
-            <div class="options-grid">
+            <div class="options-grid" id="optionsGrid">
                 <button class="option-btn" id="opt0"></button>
                 <button class="option-btn" id="opt1"></button>
                 <button class="option-btn" id="opt2"></button>
                 <button class="option-btn" id="opt3"></button>
+            </div>
+
+            <div id="trueFlashcardControls" style="display: none; text-align: center; gap: 15px; justify-content: center;">
+                <button id="btnReveal" class="action-btn" style="background: var(--neon-yellow); color: #000; width: 100%;">Tampilkan Jawaban</button>
+                <div id="nextCardControls" style="display: none; width: 100%; gap: 10px;">
+                    <button id="btnNextCard" class="action-btn" style="width: 50%; background: var(--bg-dark); border: 2px solid var(--neon-cyan);">Lanjut</button>
+                    <button id="btnMarkLearned" class="action-btn" style="width: 50%; background: var(--neon-purple);">Sudah Hafal!</button>
+                </div>
             </div>
             
         </div>
@@ -47,9 +60,9 @@
         <div id="resultScreen" class="result-screen" style="display: none;">
             <h2 class="result-title">Sesi Selesai!</h2>
             <p id="finalScoreText" class="final-score">💎 +0 Poin</p>
+            <p id="emptyMessage" style="color: var(--text-muted); margin-bottom: 20px;"></p>
             <button id="btnBackToMenu" class="action-btn">Kembali ke Menu</button>
         </div>
-
     </div>
 
     <script type="module" src="firebase-config.js"></script>
