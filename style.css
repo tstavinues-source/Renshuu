@@ -1,0 +1,217 @@
+/* RESET & BASE VARIABLES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans JP', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg-dark: #0a0a0f;
+    --text-main: #ffffff;
+    --text-muted: #a0a0b8;
+    
+    /* Cyberpunk / Neon Osaka Palette */
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff007f;
+    --neon-purple: #b538ff;
+    --neon-yellow: #ffdf00;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #0a0a0f 70%);
+}
+
+/* LAYOUT UTAMA */
+.dashboard-container {
+    max-width: 500px; /* Cocok untuk tampilan mobile */
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+
+/* HEADER */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 30px 0;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-circle {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+#userName {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.points-display {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+}
+
+/* JUDUL */
+.title-section {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.main-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    background: linear-gradient(to right, var(--neon-cyan), var(--neon-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.kanji-title {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.5rem;
+    margin-left: 10px;
+    color: var(--neon-yellow);
+    -webkit-text-fill-color: var(--neon-yellow);
+    text-shadow: 0 0 10px rgba(255, 223, 0, 0.5);
+}
+
+.subtitle {
+    color: var(--text-muted);
+    margin-top: 5px;
+    font-size: 0.9rem;
+}
+
+/* KISI-KISI MENU (DIAMOND GRID) */
+.menu-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    padding: 30px 0;
+}
+
+/* TOMBOL BELAH KETUPAT */
+.diamond-btn {
+    width: 140px;
+    height: 140px;
+    background: rgba(20, 20, 30, 0.8);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px; /* Membuat sudut membulat */
+    transform: rotate(45deg); /* Memutar menjadi belah ketupat */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.diamond-btn:hover {
+    transform: rotate(45deg) scale(1.05);
+    z-index: 2;
+}
+
+/* WARNA NEON MASING-MASING TOMBOL */
+.neon-cyan {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 15px rgba(0, 243, 255, 0.1);
+}
+.neon-cyan:hover { box-shadow: 0 0 30px rgba(0, 243, 255, 0.6), inset 0 0 20px rgba(0, 243, 255, 0.3); }
+
+.neon-pink {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.2), inset 0 0 15px rgba(255, 0, 127, 0.1);
+}
+.neon-pink:hover { box-shadow: 0 0 30px rgba(255, 0, 127, 0.6), inset 0 0 20px rgba(255, 0, 127, 0.3); }
+
+.neon-purple {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 20px rgba(181, 56, 255, 0.2), inset 0 0 15px rgba(181, 56, 255, 0.1);
+}
+.neon-purple:hover { box-shadow: 0 0 30px rgba(181, 56, 255, 0.6), inset 0 0 20px rgba(181, 56, 255, 0.3); }
+
+.neon-yellow {
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 20px rgba(255, 223, 0, 0.2), inset 0 0 15px rgba(255, 223, 0, 0.1);
+}
+.neon-yellow:hover { box-shadow: 0 0 30px rgba(255, 223, 0, 0.6), inset 0 0 20px rgba(255, 223, 0, 0.3); }
+
+/* KONTEN DALAM TOMBOL (Diputar balik agar tegak) */
+.diamond-content {
+    transform: rotate(-45deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 150px;
+    height: 150px;
+}
+
+.btn-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+}
+
+.btn-title {
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.btn-desc {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 0 10px;
+}
+
+/* BACKGROUND EFEK (Bintang / Grid samar) */
+.bg-particles {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+    opacity: 0.3;
+    z-index: 1;
+    pointer-events: none;
+}
