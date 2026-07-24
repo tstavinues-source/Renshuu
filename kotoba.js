@@ -8,13 +8,29 @@ const KotobaApp = {
     data: [], currentCard: null,
     score: 0, streak: 0, exp: 0, level: 1,
     quizMode: '', questionIndex: 0,
+    isDataReady: false, // Mencegah klik sebelum data siap
     
-    // Inisialisasi Aplikasi
-    init() {
-        lucide.createIcons(); // Render ikon premium
+    // Inisialisasi Aplikasi (Dibuat async agar menunggu Firebase)
+    async init() {
+        lucide.createIcons(); 
         this.loadPlayerData();
-        this.fetchDatabase();
         this.setupAudioAndHaptics();
+
+        // 1. Tampilkan status sedang memuat
+        const subtitle = document.querySelector('.section-title p');
+        subtitle.innerHTML = "<span style='color: var(--cyan);'>⏳ Menghubungkan ke Server Cyber...</span>";
+
+        // 2. Tunggu data Firebase selesai diunduh
+        await this.fetchDatabase();
+
+        // 3. Cek hasil unduhan
+        if (this.data.length >= 4) {
+            subtitle.innerHTML = `✅ Sistem Aktif. <span style="color:var(--yellow); font-weight:bold;">${this.data.length} Kosakata</span> siap dipelajari.`;
+            this.isDataReady = true;
+        } else {
+            subtitle.innerHTML = "❌ Gagal memuat data. Cek koneksi atau database-mu.";
+            this.showToast("Database kosong atau gagal dimuat!", "error");
+        }
 
         // Listener untuk Flip Card 3D
         document.getElementById('flashcard3D').addEventListener('click', () => {
@@ -24,15 +40,36 @@ const KotobaApp = {
         });
     },
 
-    // Memuat Data Pemain dari LocalStorage
+    // Sistem Notifikasi Pop-up (Pengganti Alert)
+    showToast(message, type = "error") {
+        // Hapus toast lama jika ada
+        const oldToast = document.getElementById('kotobaToast');
+        if (oldToast) oldToast.remove();
+
+        // Buat elemen toast baru
+        const toast = document.createElement('div');
+        toast.id = 'kotobaToast';
+        toast.className = `kotoba-toast ${type === 'success' ? 'toast-success' : type === 'info' ? 'toast-info' : ''}`;
+        
+        let icon = type === 'success' ? 'check-circle' : type === 'info' ? 'info' : 'alert-circle';
+        toast.innerHTML = `<i data-lucide="${icon}"></i> <span>${message}</span>`;
+        document.body.appendChild(toast);
+        lucide.createIcons();
+
+        // Animasikan masuk, lalu hilang setelah 3 detik
+        setTimeout(() => toast.classList.add('show'), 50);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    },
+
     loadPlayerData() {
         this.exp = parseInt(localStorage.getItem('kotoba_exp')) || 0;
         this.score = parseInt(localStorage.getItem('kotoba_gem')) || 0;
         this.calculateLevel();
-        this.updateUI();
     },
 
-    // Sistem Gamifikasi (Level & EXP)
     calculateLevel() {
         this.level = Math.floor(this.exp / 1000) + 1;
         let currentLevelExp = this.exp % 1000;
@@ -41,7 +78,6 @@ const KotobaApp = {
         document.getElementById('playerExp').innerText = currentLevelExp;
         document.getElementById('gemCount').innerText = this.score;
 
-        // Animasi Lingkaran EXP
         let percentage = (currentLevelExp / 1000) * 100;
         let dashoffset = 283 - (283 * percentage) / 100;
         document.getElementById('expRing').style.strokeDashoffset = dashoffset;
@@ -61,13 +97,15 @@ const KotobaApp = {
             const dbRef = ref(db);
             const [kanjiSnap, tangoSnap] = await Promise.all([get(child(dbRef, `renshuu/kanji`)), get(child(dbRef, `renshuu/tango`))]);
             
-            let kanjiData = kanjiSnap.exists() ? kanjiSnap.val() : [];
-            let tangoData = tangoSnap.exists() ? tangoSnap.val() : [];
+            // Konversi dari Firebase Object ke Array yang benar
+            let kanjiData = kanjiSnap.exists() ? Object.values(kanjiSnap.val()) : [];
+            let tangoData = tangoSnap.exists() ? Object.values(tangoSnap.val()) : [];
+            
             tangoData = tangoData.map(item => ({ id: item.id + 1000, kanji: item.kata, hiragana: item.hiragana, arti: item.arti }));
             
-            let allData = [...kanjiData, ...tangoData].filter(i => i);
+            let allData = [...kanjiData, ...tangoData].filter(i => i && i.kanji);
             
-            // Filter kosakata yang sudah dihafal (Mastered)
+            // Filter kosakata yang sudah dihafal
             let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
             this.data = allData.filter(item => !masteredIds.includes(item.id));
 
@@ -76,7 +114,6 @@ const KotobaApp = {
         }
     },
 
-    // Sistem Navigasi Halus (GSAP Transisi)
     navigate(targetViewId) {
         this.playSound('click');
         const currentView = document.querySelector('.active-view');
@@ -84,13 +121,11 @@ const KotobaApp = {
         
         if(currentView.id === targetViewId) return;
 
-        // Animasi keluar
         gsap.to(currentView, { 
             opacity: 0, y: -20, duration: 0.3, ease: "power2.in",
             onComplete: () => {
                 currentView.classList.remove('active-view');
                 targetView.classList.add('active-view');
-                // Animasi masuk
                 gsap.fromTo(targetView, 
                     { opacity: 0, y: 20 }, 
                     { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.5)" }
@@ -98,7 +133,6 @@ const KotobaApp = {
             }
         });
 
-        // Update Bottom Nav Status
         document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
         if(targetViewId === 'view-dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
     },
@@ -107,7 +141,13 @@ const KotobaApp = {
     // LOGIKA KUIS
     // ==========================================
     startQuiz(mode) {
-        if(this.data.length < 4) return alert("Data kosakata belum cukup!");
+        if (!this.isDataReady) {
+            return this.showToast("Sabar, sedang mengunduh data dari server...", "info");
+        }
+        if (this.data.length < 4) {
+            return this.showToast("Data kosakata belum cukup! Butuh minimal 4 data.", "error");
+        }
+        
         this.quizMode = mode;
         this.questionIndex = 0;
         this.streak = 0;
@@ -116,7 +156,6 @@ const KotobaApp = {
     },
 
     generateQuizQuestion() {
-        // Acak array
         let shuffled = [...this.data].sort(() => 0.5 - Math.random());
         this.currentCard = shuffled[0];
 
@@ -128,24 +167,21 @@ const KotobaApp = {
         document.getElementById('quizHint').innerText = hint;
         document.getElementById('quizQuestion').innerText = this.currentCard[askProp];
         
-        // Progress Bar Animasi
         let progress = ((this.questionIndex % 10) / 10) * 100;
         document.getElementById('quizProgressBar').style.width = `${progress}%`;
         document.getElementById('streakCount').innerText = this.streak;
 
-        // Pilihan Ganda (1 Benar, 3 Salah)
         let options = [this.currentCard[ansProp], shuffled[1][ansProp], shuffled[2][ansProp], shuffled[3][ansProp]];
-        options.sort(() => 0.5 - Math.random()); // Acak posisi
+        options.sort(() => 0.5 - Math.random());
 
         const btns = document.querySelectorAll('.option-btn');
         btns.forEach((btn, i) => {
             btn.innerText = options[i];
-            btn.className = "glass-btn option-btn"; // Reset class
+            btn.className = "glass-btn option-btn"; 
             btn.disabled = false;
             btn.onclick = () => this.checkAnswer(btn, options[i] === this.currentCard[ansProp]);
         });
 
-        // Animasikan teks masuk
         gsap.fromTo(".question-display", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "elastic.out(1, 0.5)" });
     },
 
@@ -155,22 +191,19 @@ const KotobaApp = {
         if (isCorrect) {
             btn.classList.add('correct');
             this.streak++;
-            this.addReward(15, 2); // +15 EXP, +2 Gems
+            this.addReward(15, 2); 
             this.playSound('correct');
             this.haptic([50]);
             
-            // Confetti Effect
             confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#2EE6FF', '#FF4DD8'] });
         } else {
             btn.classList.add('wrong');
             this.streak = 0;
             this.playSound('wrong');
-            this.haptic([50, 100, 50]); // Getar error
+            this.haptic([50, 100, 50]); 
 
-            // Shake Animation GSAP
             gsap.to(".question-display", { x: [-10, 10, -10, 10, 0], duration: 0.4 });
             
-            // Tunjukkan yang benar
             let correctAns = (this.quizMode === 'kanji-arti' || this.quizMode === 'hiragana-arti') ? this.currentCard.arti : this.currentCard.hiragana;
             document.querySelectorAll('.option-btn').forEach(b => { if(b.innerText === correctAns) b.classList.add('correct'); });
         }
@@ -187,24 +220,26 @@ const KotobaApp = {
     // LOGIKA TRUE FLASHCARD 3D
     // ==========================================
     startFlashcard() {
-        if(this.data.length === 0) return alert("Semua kosakata telah dikuasai! Luar biasa.");
+        if (!this.isDataReady) {
+            return this.showToast("Sabar, sedang mengunduh data...", "info");
+        }
+        if (this.data.length === 0) {
+            return this.showToast("Semua kosakata telah dikuasai!", "success");
+        }
         this.navigate('view-flashcard');
         this.loadCardToUI();
     },
 
     loadCardToUI() {
-        // Reset rotasi kartu
         document.getElementById('flashcard3D').classList.remove('is-flipped');
         document.querySelector('.flashcard-controls').classList.remove('show');
         
-        // Ambil acak
         this.currentCard = this.data[Math.floor(Math.random() * this.data.length)];
         
         document.getElementById('fcFrontText').innerText = this.currentCard.kanji;
         document.getElementById('fcBackHira').innerText = this.currentCard.hiragana;
         document.getElementById('fcBackArti').innerText = this.currentCard.arti;
 
-        // Animasi pop-in kartu
         gsap.fromTo(".card-3d", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.5)" });
     },
 
@@ -215,33 +250,31 @@ const KotobaApp = {
             masteredIds.push(this.currentCard.id);
             localStorage.setItem('kotoba_mastered', JSON.stringify(masteredIds));
             
-            // Hapus dari data aktif
             this.data = this.data.filter(item => item.id !== this.currentCard.id);
-            this.addReward(30, 5); // Reward besar karena sudah hafal
+            this.addReward(30, 5); 
             
-            // Animasi terbang ke atas
+            if(this.data.length === 0) {
+                this.showToast("Deck selesai! Semua dikuasai.", "success");
+                return setTimeout(() => this.navigate('view-dashboard'), 1500);
+            }
             gsap.to(".card-3d", { y: -500, opacity: 0, duration: 0.5, onComplete: () => this.loadCardToUI() });
         } else {
-            // Animasi geser kiri (Swipe out)
             gsap.to(".card-3d", { x: -300, opacity: 0, duration: 0.3, onComplete: () => {
-                gsap.set(".card-3d", { x: 300 }); // Pindah ke kanan
+                gsap.set(".card-3d", { x: 300 }); 
                 this.loadCardToUI();
                 gsap.to(".card-3d", { x: 0, duration: 0.4, ease: "power2.out" });
             }});
         }
     },
 
-    // ==========================================
-    // SENSOR & MEDIA (Audio & Getaran)
-    // ==========================================
     setupAudioAndHaptics() {
-        // Web Audio API untuk efek suara ringan tanpa MP3
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioCtx = new AudioContext();
     },
 
     playSound(type) {
         if(!this.audioCtx) return;
+        if(this.audioCtx.state === 'suspended') this.audioCtx.resume();
         const osc = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
         osc.connect(gainNode);
@@ -254,18 +287,13 @@ const KotobaApp = {
     },
 
     haptic(pattern) {
-        // Haptic Feedback untuk Android
         if ("vibrate" in navigator) navigator.vibrate(pattern);
     },
 
-    // Placeholder Fitur Kamus
     openDictionary() {
-        alert("Kotoba+ Dictionary dengan Filter dan Sistem Tagging sedang dipersiapkan!");
+        this.showToast("Fitur Kamus sedang disempurnakan!", "info");
     }
 };
 
-// Expose fungsi ke global window agar bisa dipanggil dari HTML onclick
 window.KotobaApp = KotobaApp;
-
-// Jalankan saat HTML selesai dirender
 document.addEventListener('DOMContentLoaded', () => KotobaApp.init());
