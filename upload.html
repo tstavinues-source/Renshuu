@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Data Uploader - Renshuu</title>
+</head>
+<body>
+  <h2>Firebase Data Uploader for Renshuu App</h2>
+  <button id="uploadBtn" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+    Unggah Data ke Firebase
+  </button>
+  <p id="status"></p>
+
+  <script type="module">
+    // Import SDK Firebase v9+ Moduler
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Konfigurasi Firebase milik kamu
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbToxe8-_fsyhtYPHG1bBCi_dGNzEYM20",
+      authDomain: "database-touban.firebaseapp.com",
+      databaseURL: "https://database-touban-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "database-touban",
+      storageBucket: "database-touban.firebasestorage.app",
+      messagingSenderId: "563555749198",
+      appId: "1:563555749198:web:c18c08217159ceec2f621f",
+      measurementId: "G-LJQTPGE5VE"
+    };
+
+    // Inisialisasi Firebase & Realtime Database
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Data 100 Kanji
+    const kanjiData = [
+      { id: 1, kanji: "部品", hiragana: "ぶひん", arti: "Part / komponen" },
+      { id: 2, kanji: "現品票", hiragana: "げんびんひょう", arti: "Label barang" },
+      { id: 3, kanji: "指図", hiragana: "さしず", arti: "Instruksi" },
+      { id: 4, kanji: "洗浄", hiragana: "せんじょう", arti: "Pencucian" },
+      { id: 5, kanji: "廃却", hiragana: "はいきゃく", arti: "Pembuangan" },
+      { id: 6, kanji: "頻度", hiragana: "ひんど", arti: "Seberapa sering" },
+      { id: 7, kanji: "投入", hiragana: "とうにゅう", arti: "Memasukkan" },
+      { id: 8, kanji: "排出", hiragana: "はいしゅつ", arti: "Pengeluaran barang" },
+      { id: 9, kanji: "必ず", hiragana: "かならず", arti: "Pasti" },
+      { id: 10, kanji: "大型", hiragana: "おおがた", arti: "Benda besar" },
+      { id: 11, kanji: "小型", hiragana: "こがた", arti: "Benda kecil" },
+      { id: 12, kanji: "供給", hiragana: "きょうきゅう", arti: "Pasokan" },
+      { id: 13, kanji: "品目", hiragana: "ひんもく", arti: "Daftar barang" },
+      { id: 14, kanji: "設備", hiragana: "せつび", arti: "Fasilitas" },
+      { id: 15, kanji: "真空", hiragana: "しんくう", arti: "Vakum" },
+      { id: 16, kanji: "点検", hiragana: "てんけん", arti: "Pemeriksaan" },
+      { id: 17, kanji: "段替え", hiragana: "だんがえ", arti: "Penggantian" },
+      { id: 18, kanji: "逆向き", hiragana: "ぎゃくむき", arti: "Terbalik / arah berlawanan" },
+      { id: 19, kanji: "異常", hiragana: "いじょう", arti: "Masalah / Abnormal" },
+      { id: 20, kanji: "自動", hiragana: "じどう", arti: "Otomatis" },
+      { id: 21, kanji: "手動", hiragana: "しゅどう", arti: "Manual" },
+      { id: 22, kanji: "起動", hiragana: "きどう", arti: "Start up / Aktivasi" },
+      { id: 23, kanji: "停止", hiragana: "ていし", arti: "Berhenti" },
+      { id: 24, kanji: "落下品", hiragana: "らっかひん", arti: "Barang jatuh" },
+      { id: 25, kanji: "追加", hiragana: "ついか", arti: "Tambahan" },
+      { id: 26, kanji: "調整", hiragana: "ちょうせい", arti: "Penyesuaian" },
+      { id: 27, kanji: "圧入", hiragana: "あつにゅう", arti: "Tekanan Pres" },
+      { id: 28, kanji: "上限", hiragana: "じょうげん", arti: "Batas atas" },
+      { id: 29, kanji: "下限", hiragana: "かげん", arti: "Batas bawah" },
+      { id: 30, kanji: "開閉", hiragana: "かいへい", arti: "Buka Tutup" },
+      { id: 31, kanji: "上下", hiragana: "じょうげ", arti: "Atas bawah" },
+      { id: 32, kanji: "左右", hiragana: "さゆう", arti: "Kiri dan kanan" },
+      { id: 33, kanji: "清掃", hiragana: "せいそう", arti: "Kebersihan" },
+      { id: 34, kanji: "掃除", hiragana: "そうじ", arti: "Bersih-bersih" },
+      { id: 35, kanji: "高さ", hiragana: "たかさ", arti: "Ketinggian" },
+      { id: 36, kanji: "不適合", hiragana: "ふできごう", arti: "Barang NG" },
+      { id: 37, kanji: "生産数", hiragana: "せいさんすう", arti: "Jumlah Produksi" },
+      { id: 38, kanji: "出荷", hiragana: "しゅっか", arti: "Pengiriman" },
+      { id: 39, kanji: "前後", hiragana: "ぜんご", arti: "Depan Belakang" },
+      { id: 40, kanji: "昇降", hiragana: "しょうこう", arti: "Naik Turun" },
+      { id: 41, kanji: "保留", hiragana: "ほりゅう", arti: "Penundaan" },
+      { id: 42, kanji: "選別", hiragana: "せんべつ", arti: "Penyortiran" },
+      { id: 43, kanji: "早出", hiragana: "はやで", arti: "Berangkat awal" },
+      { id: 44, kanji: "残業", hiragana: "ざんぎょう", arti: "Lembur" },
+      { id: 45, kanji: "秤", hiragana: "はかり", arti: "Timbangan" },
+      { id: 46, kanji: "集計", hiragana: "しゅうけい", arti: "Penghitungan" },
+      { id: 47, kanji: "反転", hiragana: "はんてん", arti: "Membalik" },
+      { id: 48, kanji: "移載", hiragana: "いさい", arti: "Pemindahan" },
+      { id: 49, kanji: "再測", hiragana: "さいそく", arti: "Pengukuran ulang" },
+      { id: 50, kanji: "入力", hiragana: "にゅうりょく", arti: "Input data" },
+      { id: 51, kanji: "不使用", hiragana: "ふしよう", arti: "Tidak digunakan" },
+      { id: 52, kanji: "打痕", hiragana: "だこん", arti: "Penyok" },
+      { id: 53, kanji: "欠品", hiragana: "けっぴん", arti: "Barang hilang" },
+      { id: 54, kanji: "記録", hiragana: "きろく", arti: "Catatan" },
+      { id: 55, kanji: "非常停止", hiragana: "ひじょうていし", arti: "Penghentian darurat" },
+      { id: 56, kanji: "治具", hiragana: "じぐ", arti: "Jig" },
+      { id: 57, kanji: "運搬", hiragana: "うんばん", arti: "Mengangkut" },
+      { id: 58, kanji: "国内", hiragana: "こくない", arti: "Domestik" },
+      { id: 59, kanji: "乾燥", hiragana: "かんそう", arti: "Pengeringan" },
+      { id: 60, kanji: "終了", hiragana: "しゅうりょう", arti: "Selesai secara keseluruhan" },
+      { id: 61, kanji: "完了", hiragana: "かんりょう", arti: "Selesai" },
+      { id: 62, kanji: "直材", hiragana: "ちょくざい", arti: "Barang yang digunakan" },
+      { id: 63, kanji: "修理", hiragana: "しゅうり", arti: "Memperbaiki" },
+      { id: 64, kanji: "外観", hiragana: "がいかん", arti: "Tampilan visual" },
+      { id: 65, kanji: "残品", hiragana: "ざんぴん", arti: "Sisa" },
+      { id: 66, kanji: "刻印", hiragana: "こくいん", arti: "Ukiran" },
+      { id: 67, kanji: "端数", hiragana: "はすう", arti: "Pecahan / desimal" },
+      { id: 68, kanji: "検査", hiragana: "けんさ", arti: "Pemeriksaan" },
+      { id: 69, kanji: "変形", hiragana: "へんけい", arti: "Perubahan bentuk" },
+      { id: 70, kanji: "回収", hiragana: "かいしゅう", arti: "Pengumpulan" },
+      { id: 71, kanji: "異品", hiragana: "いひん", arti: "Benda asing" },
+      { id: 72, kanji: "空箱", hiragana: "からばこ", arti: "Kotak kosong" },
+      { id: 73, kanji: "包装", hiragana: "ほうそう", arti: "Kemasan" },
+      { id: 74, kanji: "発注", hiragana: "はっちゅう", arti: "Pemesanan" },
+      { id: 75, kanji: "標準", hiragana: "ひょうじゅん", arti: "Standar" },
+      { id: 76, kanji: "定位置", hiragana: "ていいち", arti: "Posisi layout" },
+      { id: 77, kanji: "出勤", hiragana: "しゅっきん", arti: "Kehadiran kerja" },
+      { id: 78, kanji: "輸出", hiragana: "ゆしゅつ", arti: "Ekspor" },
+      { id: 79, kanji: "作業台", hiragana: "さぎょうだい", arti: "Meja kerja" },
+      { id: 80, kanji: "精度", hiragana: "せいど", arti: "Akurat" },
+      { id: 81, kanji: "抵抗", hiragana: "ていこう", arti: "Perlawanan / penekan" },
+      { id: 82, kanji: "耐水", hiragana: "たいすい", arti: "Anti air" },
+      { id: 83, kanji: "共通", hiragana: "きょうつう", arti: "Kesamaan" },
+      { id: 84, kanji: "在庫", hiragana: "ざいこ", arti: "Stock" },
+      { id: 85, kanji: "印刷", hiragana: "いんさつ", arti: "Mencetak" },
+      { id: 86, kanji: "左右", hiragana: "さゆう", arti: "Kiri dan kanan" },
+      { id: 87, kanji: "表面", hiragana: "ひょうめん", arti: "Permukaan" },
+      { id: 88, kanji: "側面", hiragana: "そくめん", arti: "Tampak samping" },
+      { id: 89, kanji: "裏", hiragana: "うら", arti: "Sisi belakang" },
+      { id: 90, kanji: "避難", hiragana: "ひなん", arti: "Mengungsi / evakuasi" },
+      { id: 91, kanji: "精密", hiragana: "せいみつ", arti: "Presisi" },
+      { id: 92, kanji: "不良", hiragana: "ふりょう", arti: "Cacat" },
+      { id: 93, kanji: "原因", hiragana: "げんいん", arti: "Penyebab" },
+      { id: 94, kanji: "内容", hiragana: "ないよう", arti: "Isi" },
+      { id: 95, kanji: "保管", hiragana: "ほかん", arti: "Penyimpanan" },
+      { id: 96, kanji: "精密", hiragana: "せいみつ", arti: "Presisi" },
+      { id: 97, kanji: "不良", hiragana: "ふりょう", arti: "Cacat" },
+      { id: 98, kanji: "原因", hiragana: "げんいん", arti: "Penyebab" },
+      { id: 99, kanji: "内容", hiragana: "ないよう", arti: "Isi" },
+      { id: 100, kanji: "保管", hiragana: "ほかん", arti: "Penyimpanan" }
+    ];
+
+    // Data 26 Tango
+    const tangoData = [
+      { id: 1, kata: "システム", hiragana: "しすてむ", arti: "Sistem" },
+      { id: 2, kata: "チャック", hiragana: "ちゃっく", arti: "Pencapit" },
+      { id: 3, kata: "マスター", hiragana: "ますたー", arti: "Master" },
+      { id: 4, kata: "ポカヨケ", hiragana: "ぽかよけ", arti: "Pokayoke" },
+      { id: 5, kata: "ワーク", hiragana: "わーく", arti: "Benda modal / benda kerja" },
+      { id: 6, kata: "ハンディ", hiragana: "はんでい", arti: "Handy" },
+      { id: 7, kata: "GOT", hiragana: "じーおーてぃー", arti: "GOT" },
+      { id: 8, kata: "サンプル票", hiragana: "さんぷるひょう", arti: "Lembar contoh" },
+      { id: 9, kata: "ピッキング", hiragana: "ぴっきんぐ", arti: "Picking" },
+      { id: 10, kata: "作業標準", hiragana: "さぎょうひょうじゅん", arti: "Standar kerja" },
+      { id: 11, kata: "液交換", hiragana: "えきこうかん", arti: "Penggantian cairan" },
+      { id: 12, kata: "洗浄液", hiragana: "せんじょうえき", arti: "Cairan pencuci" },
+      { id: 13, kata: "実績登録", hiragana: "じっせきとうろく", arti: "Registrasi hasil" },
+      { id: 14, kata: "指図完了", hiragana: "さしずかんりょう", arti: "Instruksi selesai" },
+      { id: 15, kata: "指図保留", hiragana: "さしずほりゅう", arti: "Instruksi ditunda" },
+      { id: 16, kata: "非常停止", hiragana: "ひじょうていし", arti: "Penghentian darurat" },
+      { id: 17, kata: "降ろす", hiragana: "おろす", arti: "Menurunkan" },
+      { id: 18, kata: "減らす", hiragana: "へらす", arti: "Mengurangi" },
+      { id: 19, kata: "原点復帰", hiragana: "げんてんふっき", arti: "Kembali ke semula" },
+      { id: 20, kata: "位置決め", hiragana: "いちぎめ", arti: "Penentuan posisi" },
+      { id: 21, kata: "詰め替え", hiragana: "つめかえ", arti: "Pengisian ulang" },
+      { id: 22, kata: "打ち込み", hiragana: "うちこみ", arti: "Pencetakan" },
+      { id: 23, kata: "出来栄え", hiragana: "できばえ", arti: "Pemeriksaan / hasil" },
+      { id: 24, kata: "手直し", hiragana: "てなおし", arti: "Pengerjaan ulang" },
+      { id: 25, kata: "使用可能", hiragana: "しょうかのう", arti: "Bisa digunakan" },
+      { id: 26, kata: "使用不可", hiragana: "しょうふか", arti: "Tidak bisa digunakan" }
+    ];
+
+    // Fungsi untuk mengunggah data ke Firebase Database
+    async function uploadAllData() {
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = "Mengunggah data...";
+
+      try {
+        // Upload node 'renshuu/kanji'
+        await set(ref(db, "renshuu/kanji"), kanjiData);
+        // Upload node 'renshuu/tango'
+        await set(ref(db, "renshuu/tango"), tangoData);
+
+        statusEl.innerText = "BERHASIL! Semua data Kanji & Tango sudah terunggah ke Firebase Realtime Database.";
+        statusEl.style.color = "green";
+      } catch (error) {
+        console.error("Error upload:", error);
+        statusEl.innerText = "GAGAL! Terjadi kesalahan: " + error.message;
+        statusEl.style.color = "red";
+      }
+    }
+
+    document.getElementById("uploadBtn").addEventListener("click", uploadAllData);
+  </script>
+</body>
+</html>
