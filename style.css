@@ -1,55 +1,38 @@
 :root {
-    /* Palet Warna Premium */
     --bg-dark: #07090F;
     --bg-card: rgba(20, 22, 35, 0.4);
     --glass-border: rgba(255, 255, 255, 0.08);
     --text-main: #FFFFFF;
     --text-muted: #8E9BAE;
     
-    --cyan: #2EE6FF;
-    --purple: #8A5CFF;
-    --pink: #FF4DD8;
-    --blue: #3B82F6;
-    --yellow: #FFD84D;
-    --green: #00E676;
-    --red: #FF3D71;
+    --cyan: #2EE6FF; --purple: #8A5CFF; --pink: #FF4DD8;
+    --blue: #3B82F6; --yellow: #FFD84D; --green: #00E676; --red: #FF3D71;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    overflow: hidden; /* Mengunci scroll manual SPA */
-    width: 100vw; height: 100vh;
-}
+body { background-color: var(--bg-dark); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-/* Background Partikel Bintang Bergerak */
 .space-particles {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-    background-image: 
-        radial-gradient(circle at 15% 50%, rgba(46, 230, 255, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(138, 92, 255, 0.08), transparent 25%);
+    background-image: radial-gradient(circle at 15% 50%, rgba(46, 230, 255, 0.08), transparent 25%),
+                      radial-gradient(circle at 85% 30%, rgba(138, 92, 255, 0.08), transparent 25%);
     animation: pulseBg 10s infinite alternate;
 }
 @keyframes pulseBg { 0% { opacity: 0.7; } 100% { opacity: 1; } }
 
-/* Sistem Routing Single Page */
+/* APP VIEWS */
 .app-view {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: none; opacity: 0; flex-direction: column;
-    padding-bottom: 80px; /* Ruang untuk bottom nav */
 }
 .app-view.active-view { display: flex; opacity: 1; }
 
-/* HEADER & PROFIL (Glassmorphism) */
+/* HEADER & PROFIL */
 .glass-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 20px;
-    background: rgba(10, 12, 20, 0.6);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
-    z-index: 10;
+    display: flex; justify-content: space-between; align-items: center; padding: 20px;
+    background: rgba(10, 12, 20, 0.6); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border); z-index: 10;
 }
 .profile-section { display: flex; align-items: center; gap: 15px; }
 .avatar-container { position: relative; width: 55px; height: 55px; }
@@ -61,66 +44,36 @@ body {
 .profile-info h2 { font-size: 1.1rem; letter-spacing: 0.5px; }
 .exp-text { font-size: 0.75rem; color: var(--cyan); font-family: 'Orbitron'; margin-top: 2px; }
 
-/* GEM CAPSULE */
 .gem-capsule {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.05); padding: 8px 16px;
-    border-radius: 30px; border: 1px solid rgba(255, 216, 77, 0.3);
-    box-shadow: 0 0 15px rgba(255, 216, 77, 0.1);
+    display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 8px 16px;
+    border-radius: 30px; border: 1px solid rgba(255, 216, 77, 0.3); box-shadow: 0 0 15px rgba(255, 216, 77, 0.1);
 }
 .gem-icon { color: var(--yellow); width: 18px; height: 18px; fill: rgba(255,216,77,0.2); }
 #gemCount { font-family: 'Orbitron'; font-weight: bold; font-size: 1rem; color: var(--text-main); }
 
 /* DASHBOARD CARDS */
-.dashboard-content { padding: 25px 20px; overflow-y: auto; flex: 1; }
-.section-title h3 { font-family: 'Orbitron'; font-size: 1.4rem; color: var(--text-main); }
-.section-title p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 25px; }
-.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.dashboard-content { padding: 25px 20px; overflow-y: auto; flex: 1; padding-bottom: 50px; }
+.section-title h3 { font-family: 'Orbitron'; font-size: 1.4rem; }
+.section-title p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+.category-title { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .premium-card {
-    position: relative; overflow: hidden;
-    background: var(--bg-card);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 20px 15px;
-    display: flex; flex-direction: column; align-items: flex-start;
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
+    background: var(--bg-card); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);
+    border-radius: 20px; padding: 20px 15px; display: flex; flex-direction: column; align-items: flex-start;
+    transition: transform 0.2s; cursor: pointer;
 }
 .premium-card:active { transform: scale(0.95); }
-.card-icon { width: 32px; height: 32px; margin-bottom: 12px; }
-.premium-card h4 { font-size: 0.95rem; margin-bottom: 4px; font-weight: 700; z-index: 2; }
-.premium-card p { font-size: 0.7rem; color: var(--text-muted); z-index: 2; }
+.card-icon { width: 28px; height: 28px; margin-bottom: 12px; }
+.premium-card h4 { font-size: 0.9rem; font-weight: 700; }
+.premium-card p { font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; }
 
-/* Dynamic Card Colors */
-.style-cyan .card-icon { color: var(--cyan); }
-.style-cyan { border-color: rgba(46, 230, 255, 0.3); }
-.style-pink .card-icon { color: var(--pink); }
-.style-pink { border-color: rgba(255, 77, 216, 0.3); }
-.style-purple .card-icon { color: var(--purple); }
-.style-purple { border-color: rgba(138, 92, 255, 0.3); }
-.style-yellow .card-icon { color: var(--yellow); }
-.style-yellow { border-color: rgba(255, 216, 77, 0.3); }
+.style-cyan .card-icon { color: var(--cyan); } .style-cyan { border-color: rgba(46, 230, 255, 0.3); }
+.style-purple .card-icon { color: var(--purple); } .style-purple { border-color: rgba(138, 92, 255, 0.3); }
+.style-yellow .card-icon { color: var(--yellow); } .style-yellow { border-color: rgba(255, 216, 77, 0.3); }
 
-/* BOTTOM NAVIGATION */
-.bottom-nav {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 400px;
-    background: rgba(10, 12, 20, 0.7); backdrop-filter: blur(25px);
-    border: 1px solid var(--glass-border); border-radius: 30px;
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 10px 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    z-index: 50;
-}
-.nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; cursor: pointer; transition: 0.3s; }
-.nav-item i { width: 22px; height: 22px; transition: 0.3s; }
-.nav-item span { font-size: 0.65rem; font-weight: 600; }
-.nav-item.active { color: var(--cyan); }
-.nav-item.active i { filter: drop-shadow(0 0 8px var(--cyan)); transform: translateY(-3px); }
-
-/* QUIZ ARENA UI */
-.quiz-topbar { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--glass-border); }
+/* QUIZ UI */
+.quiz-topbar { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--glass-border); background: var(--bg-dark); z-index: 10;}
 .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; }
 .progress-capsule { flex: 1; margin: 0 15px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
 .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--blue)); box-shadow: 0 0 10px var(--cyan); transition: width 0.3s ease; }
@@ -129,7 +82,7 @@ body {
 .quiz-arena { display: flex; flex-direction: column; padding: 20px; height: 100%; justify-content: space-evenly; }
 .question-display { text-align: center; }
 .hint-text { color: var(--purple); font-weight: 700; letter-spacing: 2px; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 15px; }
-.main-kanji { font-size: 5rem; font-family: 'Noto Sans JP'; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
+.main-kanji { font-size: 4.5rem; font-family: 'Noto Sans JP'; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
 
 .options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .glass-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: #fff; padding: 20px 10px; border-radius: 16px; font-size: 1rem; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); transition: 0.2s; }
@@ -137,34 +90,25 @@ body {
 .glass-btn.correct { background: rgba(0, 230, 118, 0.2); border-color: var(--green); box-shadow: 0 0 20px rgba(0, 230, 118, 0.4); color: var(--green); }
 .glass-btn.wrong { background: rgba(255, 61, 113, 0.2); border-color: var(--red); box-shadow: 0 0 20px rgba(255, 61, 113, 0.4); color: var(--red); }
 
-/* =========================================
-   FLASHCARD 3D ENGINE
-   ========================================= */
+/* FLASHCARD 3D */
 .flashcard-arena { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; perspective: 1000px; }
-.scene { width: 100%; max-width: 320px; height: 450px; perspective: 1000px; }
+.scene { width: 100%; max-width: 320px; height: 420px; perspective: 1200px; z-index: 5; }
 .card-3d { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
 .card-3d.is-flipped { transform: rotateY(180deg); }
 
 .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--glass-border); }
-
-/* Front Face */
 .card-front { background: linear-gradient(145deg, rgba(30, 34, 53, 0.9), rgba(15, 17, 26, 0.9)); backdrop-filter: blur(10px); }
-.card-front h1 { font-size: 5.5rem; font-family: 'Noto Sans JP'; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
-.tap-hint { position: absolute; bottom: 20px; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; animation: bounce 2s infinite; }
+.card-front h1 { font-size: 5rem; font-family: 'Noto Sans JP'; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+.tap-hint { position: absolute; bottom: 20px; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; animation: bounce 2s infinite; pointer-events: none; }
 
-/* Back Face */
 .card-back { background: linear-gradient(145deg, rgba(46, 230, 255, 0.1), rgba(138, 92, 255, 0.1)); transform: rotateY(180deg); border-color: rgba(138, 92, 255, 0.4); }
 .back-content { width: 100%; display: flex; flex-direction: column; align-items: center; }
-.furigana-badge { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; color: var(--cyan); letter-spacing: 1px; margin-bottom: 10px; }
-.hira-text { font-size: 2.5rem; color: #fff; font-family: 'Noto Sans JP'; margin-bottom: 20px; }
-.divider { width: 50%; height: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); margin-bottom: 20px; }
-.arti-text { font-size: 1.3rem; font-weight: 600; color: var(--yellow); line-height: 1.4; }
-.tags-row { display: flex; gap: 10px; position: absolute; bottom: 30px; }
-.jlpt-tag, .type-tag { font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: bold; }
-.jlpt-tag { background: rgba(255, 77, 216, 0.2); color: var(--pink); }
-.type-tag { background: rgba(46, 230, 255, 0.2); color: var(--cyan); }
+.furigana-badge { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; color: var(--cyan); margin-bottom: 15px; }
+.hira-text { font-size: 2.5rem; color: #fff; font-family: 'Noto Sans JP'; margin-bottom: 15px; }
+.divider { width: 50%; height: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); margin-bottom: 15px; }
+.arti-text { font-size: 1.2rem; font-weight: 600; color: var(--yellow); line-height: 1.4; }
 
-.flashcard-controls { display: flex; gap: 15px; width: 100%; max-width: 320px; margin-top: 30px; opacity: 0; pointer-events: none; transition: 0.3s; }
+.flashcard-controls { display: flex; gap: 15px; width: 100%; max-width: 320px; margin-top: 30px; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 10; }
 .flashcard-controls.show { opacity: 1; pointer-events: auto; }
 .action-btn { flex: 1; padding: 15px; }
 .danger { border-color: rgba(255, 61, 113, 0.4); color: var(--red); }
@@ -172,19 +116,20 @@ body {
 
 @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-/* =========================================
-   CUSTOM TOAST NOTIFICATION
-   ========================================= */
-.kotoba-toast {
-    position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-150px);
-    background: rgba(255, 61, 113, 0.9); backdrop-filter: blur(15px);
-    color: white; padding: 15px 25px; border-radius: 30px;
-    font-weight: 700; font-size: 0.95rem; z-index: 9999;
-    box-shadow: 0 10px 30px rgba(255, 61, 113, 0.4);
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex; align-items: center; gap: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
+/* DICTIONARY UI */
+.dictionary-container { padding: 20px; overflow-y: auto; flex: 1; padding-bottom: 50px; }
+.dictionary-list { display: flex; flex-direction: column; gap: 12px; }
+.dict-card { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--cyan); transition: 0.3s; }
+.dict-card.mastered { opacity: 0.5; border-left-color: var(--green); background: rgba(0, 230, 118, 0.05); }
+.dict-kanji { font-size: 1.6rem; font-weight: bold; color: #fff; font-family: 'Noto Sans JP'; }
+.dict-sub { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; margin-left: 15px; flex: 1; }
+.dict-hira { color: var(--pink); font-weight: bold; margin-bottom: 2px; }
+.dict-arti { color: #fff; }
+.btn-toggle-dict { background: transparent; border: 1px solid var(--purple); color: var(--purple); padding: 8px; border-radius: 10px; cursor: pointer; transition: 0.3s; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;}
+.dict-card.mastered .btn-toggle-dict { border-color: var(--green); color: var(--green); background: rgba(0, 230, 118, 0.2); }
+
+/* TOAST NOTIFICATION */
+.kotoba-toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-150px); background: rgba(255, 61, 113, 0.9); backdrop-filter: blur(15px); color: white; padding: 15px 25px; border-radius: 30px; font-weight: 700; font-size: 0.95rem; z-index: 9999; display: flex; align-items: center; gap: 10px; transition: 0.5s; }
 .kotoba-toast.show { transform: translateX(-50%) translateY(0); }
-.toast-success { background: rgba(0, 230, 118, 0.9); box-shadow: 0 10px 30px rgba(0, 230, 118, 0.4); }
-.toast-info { background: rgba(46, 230, 255, 0.9); box-shadow: 0 10px 30px rgba(46, 230, 255, 0.4); }
+.toast-success { background: rgba(0, 230, 118, 0.9); }
+.toast-info { background: rgba(46, 230, 255, 0.9); }
