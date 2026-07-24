@@ -1,67 +1,47 @@
 import { db } from './firebase-config.js';
 import { ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// ==========================================
-// KOTOBA+ CORE ENGINE
-// ==========================================
 const KotobaApp = {
-    data: [], currentCard: null,
+    allData: [], // Seluruh data murni
+    activeData: [], // Data yang belum dihafal
+    currentCard: null,
     score: 0, streak: 0, exp: 0, level: 1,
-    quizMode: '', questionIndex: 0,
-    isDataReady: false, // Mencegah klik sebelum data siap
+    quizMode: '', flashMode: '', questionIndex: 0,
+    isDataReady: false,
     
-    // Inisialisasi Aplikasi (Dibuat async agar menunggu Firebase)
     async init() {
         lucide.createIcons(); 
         this.loadPlayerData();
         this.setupAudioAndHaptics();
 
-        // 1. Tampilkan status sedang memuat
         const subtitle = document.querySelector('.section-title p');
-        subtitle.innerHTML = "<span style='color: var(--cyan);'>⏳ Menghubungkan ke Server Cyber...</span>";
+        subtitle.innerHTML = "<span style='color: var(--cyan);'>⏳ Mengambil Data Server...</span>";
 
-        // 2. Tunggu data Firebase selesai diunduh
         await this.fetchDatabase();
 
-        // 3. Cek hasil unduhan
-        if (this.data.length >= 4) {
-            subtitle.innerHTML = `✅ Sistem Aktif. <span style="color:var(--yellow); font-weight:bold;">${this.data.length} Kosakata</span> siap dipelajari.`;
+        if (this.allData.length > 0) {
+            subtitle.innerHTML = `✅ Sistem Aktif. <span style="color:var(--yellow); font-weight:bold;">${this.activeData.length} Kosakata</span> dipelajari.`;
             this.isDataReady = true;
         } else {
-            subtitle.innerHTML = "❌ Gagal memuat data. Cek koneksi atau database-mu.";
-            this.showToast("Database kosong atau gagal dimuat!", "error");
+            subtitle.innerHTML = "❌ Gagal memuat data.";
+            this.showToast("Database kosong!", "error");
         }
-
-        // Listener untuk Flip Card 3D
-        document.getElementById('flashcard3D').addEventListener('click', () => {
-            document.getElementById('flashcard3D').classList.toggle('is-flipped');
-            document.querySelector('.flashcard-controls').classList.add('show');
-            this.playSound('flip');
-        });
     },
 
-    // Sistem Notifikasi Pop-up (Pengganti Alert)
     showToast(message, type = "error") {
-        // Hapus toast lama jika ada
         const oldToast = document.getElementById('kotobaToast');
         if (oldToast) oldToast.remove();
 
-        // Buat elemen toast baru
         const toast = document.createElement('div');
         toast.id = 'kotobaToast';
         toast.className = `kotoba-toast ${type === 'success' ? 'toast-success' : type === 'info' ? 'toast-info' : ''}`;
-        
         let icon = type === 'success' ? 'check-circle' : type === 'info' ? 'info' : 'alert-circle';
         toast.innerHTML = `<i data-lucide="${icon}"></i> <span>${message}</span>`;
         document.body.appendChild(toast);
         lucide.createIcons();
 
-        // Animasikan masuk, lalu hilang setelah 3 detik
         setTimeout(() => toast.classList.add('show'), 50);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
     },
 
     loadPlayerData() {
@@ -73,14 +53,12 @@ const KotobaApp = {
     calculateLevel() {
         this.level = Math.floor(this.exp / 1000) + 1;
         let currentLevelExp = this.exp % 1000;
-        
         document.getElementById('playerLevel').innerText = `Lv.${this.level}`;
         document.getElementById('playerExp').innerText = currentLevelExp;
         document.getElementById('gemCount').innerText = this.score;
 
         let percentage = (currentLevelExp / 1000) * 100;
-        let dashoffset = 283 - (283 * percentage) / 100;
-        document.getElementById('expRing').style.strokeDashoffset = dashoffset;
+        document.getElementById('expRing').style.strokeDashoffset = 283 - (283 * percentage) / 100;
     },
 
     addReward(expGained, gemGained) {
@@ -91,27 +69,25 @@ const KotobaApp = {
         this.calculateLevel();
     },
 
-    // Mengambil Data dari Firebase
     async fetchDatabase() {
         try {
             const dbRef = ref(db);
             const [kanjiSnap, tangoSnap] = await Promise.all([get(child(dbRef, `renshuu/kanji`)), get(child(dbRef, `renshuu/tango`))]);
             
-            // Konversi dari Firebase Object ke Array yang benar
             let kanjiData = kanjiSnap.exists() ? Object.values(kanjiSnap.val()) : [];
             let tangoData = tangoSnap.exists() ? Object.values(tangoSnap.val()) : [];
-            
             tangoData = tangoData.map(item => ({ id: item.id + 1000, kanji: item.kata, hiragana: item.hiragana, arti: item.arti }));
             
-            let allData = [...kanjiData, ...tangoData].filter(i => i && i.kanji);
-            
-            // Filter kosakata yang sudah dihafal
-            let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
-            this.data = allData.filter(item => !masteredIds.includes(item.id));
-
+            this.allData = [...kanjiData, ...tangoData].filter(i => i && i.kanji);
+            this.refreshActiveData();
         } catch (error) {
-            console.error("Firebase Error:", error);
+            console.error(error);
         }
+    },
+
+    refreshActiveData() {
+        let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
+        this.activeData = this.allData.filter(item => !masteredIds.includes(item.id));
     },
 
     navigate(targetViewId) {
@@ -126,27 +102,17 @@ const KotobaApp = {
             onComplete: () => {
                 currentView.classList.remove('active-view');
                 targetView.classList.add('active-view');
-                gsap.fromTo(targetView, 
-                    { opacity: 0, y: 20 }, 
-                    { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.5)" }
-                );
+                gsap.fromTo(targetView, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.5)" });
             }
         });
-
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        if(targetViewId === 'view-dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
     },
 
     // ==========================================
     // LOGIKA KUIS
     // ==========================================
     startQuiz(mode) {
-        if (!this.isDataReady) {
-            return this.showToast("Sabar, sedang mengunduh data dari server...", "info");
-        }
-        if (this.data.length < 4) {
-            return this.showToast("Data kosakata belum cukup! Butuh minimal 4 data.", "error");
-        }
+        if (!this.isDataReady) return this.showToast("Sedang memuat data...", "info");
+        if (this.activeData.length < 4) return this.showToast("Kosakata tersisa kurang dari 4!", "error");
         
         this.quizMode = mode;
         this.questionIndex = 0;
@@ -156,7 +122,7 @@ const KotobaApp = {
     },
 
     generateQuizQuestion() {
-        let shuffled = [...this.data].sort(() => 0.5 - Math.random());
+        let shuffled = [...this.activeData].sort(() => 0.5 - Math.random());
         this.currentCard = shuffled[0];
 
         let askProp, ansProp, hint;
@@ -166,13 +132,10 @@ const KotobaApp = {
 
         document.getElementById('quizHint').innerText = hint;
         document.getElementById('quizQuestion').innerText = this.currentCard[askProp];
-        
-        let progress = ((this.questionIndex % 10) / 10) * 100;
-        document.getElementById('quizProgressBar').style.width = `${progress}%`;
+        document.getElementById('quizProgressBar').style.width = `${((this.questionIndex % 10) / 10) * 100}%`;
         document.getElementById('streakCount').innerText = this.streak;
 
-        let options = [this.currentCard[ansProp], shuffled[1][ansProp], shuffled[2][ansProp], shuffled[3][ansProp]];
-        options.sort(() => 0.5 - Math.random());
+        let options = [this.currentCard[ansProp], shuffled[1][ansProp], shuffled[2][ansProp], shuffled[3][ansProp]].sort(() => 0.5 - Math.random());
 
         const btns = document.querySelectorAll('.option-btn');
         btns.forEach((btn, i) => {
@@ -187,45 +150,29 @@ const KotobaApp = {
 
     checkAnswer(btn, isCorrect) {
         document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
-        
         if (isCorrect) {
-            btn.classList.add('correct');
-            this.streak++;
-            this.addReward(15, 2); 
-            this.playSound('correct');
-            this.haptic([50]);
-            
+            btn.classList.add('correct'); this.streak++; this.addReward(15, 2); 
+            this.playSound('correct'); this.haptic([50]);
             confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#2EE6FF', '#FF4DD8'] });
         } else {
-            btn.classList.add('wrong');
-            this.streak = 0;
-            this.playSound('wrong');
-            this.haptic([50, 100, 50]); 
-
+            btn.classList.add('wrong'); this.streak = 0;
+            this.playSound('wrong'); this.haptic([50, 100, 50]); 
             gsap.to(".question-display", { x: [-10, 10, -10, 10, 0], duration: 0.4 });
-            
             let correctAns = (this.quizMode === 'kanji-arti' || this.quizMode === 'hiragana-arti') ? this.currentCard.arti : this.currentCard.hiragana;
             document.querySelectorAll('.option-btn').forEach(b => { if(b.innerText === correctAns) b.classList.add('correct'); });
         }
-        
         document.getElementById('streakCount').innerText = this.streak;
-        
-        setTimeout(() => {
-            this.questionIndex++;
-            this.generateQuizQuestion();
-        }, 1500);
+        setTimeout(() => { this.questionIndex++; this.generateQuizQuestion(); }, 1500);
     },
 
     // ==========================================
-    // LOGIKA TRUE FLASHCARD 3D
+    // LOGIKA FLASHCARD
     // ==========================================
-    startFlashcard() {
-        if (!this.isDataReady) {
-            return this.showToast("Sabar, sedang mengunduh data...", "info");
-        }
-        if (this.data.length === 0) {
-            return this.showToast("Semua kosakata telah dikuasai!", "success");
-        }
+    startFlashcard(mode) {
+        if (!this.isDataReady) return this.showToast("Sedang memuat data...", "info");
+        if (this.activeData.length === 0) return this.showToast("Semua kosakata telah dikuasai!", "success");
+        
+        this.flashMode = mode;
         this.navigate('view-flashcard');
         this.loadCardToUI();
     },
@@ -234,13 +181,34 @@ const KotobaApp = {
         document.getElementById('flashcard3D').classList.remove('is-flipped');
         document.querySelector('.flashcard-controls').classList.remove('show');
         
-        this.currentCard = this.data[Math.floor(Math.random() * this.data.length)];
+        this.currentCard = this.activeData[Math.floor(Math.random() * this.activeData.length)];
         
-        document.getElementById('fcFrontText').innerText = this.currentCard.kanji;
-        document.getElementById('fcBackHira').innerText = this.currentCard.hiragana;
-        document.getElementById('fcBackArti').innerText = this.currentCard.arti;
+        // Atur Konten Berdasarkan Mode
+        let front, backMain, backSub, badge;
+        if(this.flashMode === 'kanji-arti') { front = this.currentCard.kanji; backMain = this.currentCard.arti; backSub = this.currentCard.hiragana; badge = "Arti"; }
+        if(this.flashMode === 'kanji-hiragana') { front = this.currentCard.kanji; backMain = this.currentCard.hiragana; backSub = this.currentCard.arti; badge = "Cara Baca"; }
+        if(this.flashMode === 'hiragana-arti') { front = this.currentCard.hiragana; backMain = this.currentCard.arti; backSub = this.currentCard.kanji; badge = "Arti"; }
+
+        document.getElementById('fcFrontText').innerText = front;
+        document.getElementById('fcBackMain').innerText = backMain;
+        document.getElementById('fcBackSub').innerText = backSub;
+        document.getElementById('fcModeBadge').innerText = badge;
 
         gsap.fromTo(".card-3d", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.5)" });
+    },
+
+    flipCard() {
+        const card = document.getElementById('flashcard3D');
+        card.classList.toggle('is-flipped');
+        
+        const controls = document.querySelector('.flashcard-controls');
+        if(card.classList.contains('is-flipped')) {
+            controls.classList.add('show');
+            this.playSound('flip');
+            this.haptic([30]);
+        } else {
+            controls.classList.remove('show');
+        }
     },
 
     nextCard(isMastered) {
@@ -250,11 +218,11 @@ const KotobaApp = {
             masteredIds.push(this.currentCard.id);
             localStorage.setItem('kotoba_mastered', JSON.stringify(masteredIds));
             
-            this.data = this.data.filter(item => item.id !== this.currentCard.id);
+            this.activeData = this.activeData.filter(item => item.id !== this.currentCard.id);
             this.addReward(30, 5); 
             
-            if(this.data.length === 0) {
-                this.showToast("Deck selesai! Semua dikuasai.", "success");
+            if(this.activeData.length === 0) {
+                this.showToast("Luar biasa! Semua dikuasai.", "success");
                 return setTimeout(() => this.navigate('view-dashboard'), 1500);
             }
             gsap.to(".card-3d", { y: -500, opacity: 0, duration: 0.5, onComplete: () => this.loadCardToUI() });
@@ -267,6 +235,61 @@ const KotobaApp = {
         }
     },
 
+    // ==========================================
+    // LOGIKA DAFTAR KOSAKATA (KAMUS)
+    // ==========================================
+    openDictionary() {
+        if (!this.isDataReady) return this.showToast("Sedang memuat data...", "info");
+        this.navigate('view-dictionary');
+        this.renderDictionary();
+    },
+
+    renderDictionary() {
+        const listDiv = document.getElementById('dictionaryList');
+        listDiv.innerHTML = '';
+        let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
+
+        this.allData.forEach(item => {
+            let isMastered = masteredIds.includes(item.id);
+            
+            let card = document.createElement('div');
+            card.className = `dict-card ${isMastered ? 'mastered' : ''}`;
+            
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; flex:1;">
+                    <div class="dict-kanji">${item.kanji}</div>
+                    <div class="dict-sub">
+                        <span class="dict-hira">${item.hiragana}</span>
+                        <span class="dict-arti">${item.arti}</span>
+                    </div>
+                </div>
+                <button class="btn-toggle-dict" onclick="KotobaApp.toggleMastered(${item.id})">
+                    <i data-lucide="${isMastered ? 'check-square-2' : 'square'}"></i>
+                </button>
+            `;
+            listDiv.appendChild(card);
+        });
+        lucide.createIcons();
+    },
+
+    toggleMastered(id) {
+        let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
+        if (masteredIds.includes(id)) {
+            masteredIds = masteredIds.filter(x => x !== id); // Hapus
+        } else {
+            masteredIds.push(id); // Tambah
+        }
+        localStorage.setItem('kotoba_mastered', JSON.stringify(masteredIds));
+        
+        this.refreshActiveData();
+        this.renderDictionary(); // Render ulang agar UI berubah seketika
+        this.playSound('click');
+        this.haptic([40]);
+    },
+
+    // ==========================================
+    // SENSOR & MEDIA
+    // ==========================================
     setupAudioAndHaptics() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioCtx = new AudioContext();
@@ -286,13 +309,7 @@ const KotobaApp = {
         else if(type === 'wrong') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, this.audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, this.audioCtx.currentTime + 0.2); gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.2); osc.start(); osc.stop(this.audioCtx.currentTime + 0.2); }
     },
 
-    haptic(pattern) {
-        if ("vibrate" in navigator) navigator.vibrate(pattern);
-    },
-
-    openDictionary() {
-        this.showToast("Fitur Kamus sedang disempurnakan!", "info");
-    }
+    haptic(pattern) { if ("vibrate" in navigator) navigator.vibrate(pattern); }
 };
 
 window.KotobaApp = KotobaApp;
