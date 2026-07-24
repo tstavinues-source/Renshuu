@@ -44,7 +44,7 @@
                 <p>⏳ Menghubungkan ke Server Cyber...</p>
             </div>
 
-            <h4 class="category-title">🎯 Kuis Pilihan Ganda</h4>
+            <h4 class="category-title"><i data-lucide="crosshair" class="title-icon"></i> Kuis Pilihan Ganda</h4>
             <div class="card-grid">
                 <div class="premium-card style-cyan" onclick="KotobaApp.startQuiz('kanji-arti')">
                     <i data-lucide="book-open-check" class="card-icon"></i>
@@ -60,7 +60,7 @@
                 </div>
             </div>
 
-            <h4 class="category-title" style="margin-top: 25px;">⚡ Flashcard 3D</h4>
+            <h4 class="category-title" style="margin-top: 25px;"><i data-lucide="zap" class="title-icon"></i> Flashcard 3D</h4>
             <div class="card-grid">
                 <div class="premium-card style-yellow" onclick="KotobaApp.startFlashcard('kanji-arti')">
                     <i data-lucide="layers" class="card-icon"></i>
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <h4 class="category-title" style="margin-top: 25px;">📚 Database</h4>
+            <h4 class="category-title" style="margin-top: 25px;"><i data-lucide="server" class="title-icon"></i> Database</h4>
             <div class="premium-card style-purple" style="width: 100%; align-items: center; text-align: center; padding: 20px;" onclick="KotobaApp.openDictionary()">
                 <i data-lucide="database" class="card-icon" style="margin-bottom: 10px;"></i>
                 <h4>Daftar Kosakata & Hafalan</h4>
@@ -132,8 +132,9 @@
             </div>
 
             <div class="flashcard-controls">
-                <button class="glass-btn action-btn danger" onclick="KotobaApp.nextCard(false)">Belum Hafal</button>
-                <button class="glass-btn action-btn success" onclick="KotobaApp.nextCard(true)">Dikuasai</button>
+                <button class="nav-arrow-btn" onclick="KotobaApp.prevFlashcard()"><i data-lucide="arrow-left"></i></button>
+                <span class="flashcard-counter" id="flashcardCounter">1 / 100</span>
+                <button class="nav-arrow-btn" onclick="KotobaApp.nextFlashcard()"><i data-lucide="arrow-right"></i></button>
             </div>
         </main>
     </div>
