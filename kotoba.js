@@ -2,11 +2,11 @@ import { db } from './firebase-config.js';
 import { ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const KotobaApp = {
-    allData: [], // Seluruh data murni
-    activeData: [], // Data yang belum dihafal
+    allData: [], 
+    activeData: [], 
     currentCard: null,
     score: 0, streak: 0, exp: 0, level: 1,
-    quizMode: '', flashMode: '', questionIndex: 0,
+    quizMode: '', flashMode: '', questionIndex: 0, flashIndex: 0,
     isDataReady: false,
     
     async init() {
@@ -166,24 +166,25 @@ const KotobaApp = {
     },
 
     // ==========================================
-    // LOGIKA FLASHCARD
+    // LOGIKA FLASHCARD (Update Kiri Kanan)
     // ==========================================
     startFlashcard(mode) {
         if (!this.isDataReady) return this.showToast("Sedang memuat data...", "info");
         if (this.activeData.length === 0) return this.showToast("Semua kosakata telah dikuasai!", "success");
         
+        // Acak list untuk sesi flashcard ini
+        this.activeData.sort(() => 0.5 - Math.random());
+        
         this.flashMode = mode;
+        this.flashIndex = 0;
         this.navigate('view-flashcard');
         this.loadCardToUI();
     },
 
     loadCardToUI() {
         document.getElementById('flashcard3D').classList.remove('is-flipped');
-        document.querySelector('.flashcard-controls').classList.remove('show');
+        this.currentCard = this.activeData[this.flashIndex];
         
-        this.currentCard = this.activeData[Math.floor(Math.random() * this.activeData.length)];
-        
-        // Atur Konten Berdasarkan Mode
         let front, backMain, backSub, badge;
         if(this.flashMode === 'kanji-arti') { front = this.currentCard.kanji; backMain = this.currentCard.arti; backSub = this.currentCard.hiragana; badge = "Arti"; }
         if(this.flashMode === 'kanji-hiragana') { front = this.currentCard.kanji; backMain = this.currentCard.hiragana; backSub = this.currentCard.arti; badge = "Cara Baca"; }
@@ -193,46 +194,46 @@ const KotobaApp = {
         document.getElementById('fcBackMain').innerText = backMain;
         document.getElementById('fcBackSub').innerText = backSub;
         document.getElementById('fcModeBadge').innerText = badge;
-
-        gsap.fromTo(".card-3d", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.5)" });
+        
+        document.getElementById('flashcardCounter').innerText = `${this.flashIndex + 1} / ${this.activeData.length}`;
     },
 
     flipCard() {
         const card = document.getElementById('flashcard3D');
         card.classList.toggle('is-flipped');
         
-        const controls = document.querySelector('.flashcard-controls');
         if(card.classList.contains('is-flipped')) {
-            controls.classList.add('show');
             this.playSound('flip');
             this.haptic([30]);
-        } else {
-            controls.classList.remove('show');
         }
     },
 
-    nextCard(isMastered) {
+    nextFlashcard() {
         this.playSound('click');
-        if (isMastered) {
-            let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
-            masteredIds.push(this.currentCard.id);
-            localStorage.setItem('kotoba_mastered', JSON.stringify(masteredIds));
+        // Animasi keluar ke kiri
+        gsap.to(".card-3d", { x: -300, opacity: 0, duration: 0.3, onComplete: () => {
+            // Naikkan index, balik ke 0 jika mentok
+            this.flashIndex = (this.flashIndex + 1) % this.activeData.length;
+            this.loadCardToUI();
             
-            this.activeData = this.activeData.filter(item => item.id !== this.currentCard.id);
-            this.addReward(30, 5); 
+            // Set posisi awal di kanan, lalu masuk dengan opacity 1 (FIXED)
+            gsap.set(".card-3d", { x: 300 });
+            gsap.to(".card-3d", { x: 0, opacity: 1, duration: 0.4, ease: "power2.out" });
+        }});
+    },
+
+    prevFlashcard() {
+        this.playSound('click');
+        // Animasi keluar ke kanan
+        gsap.to(".card-3d", { x: 300, opacity: 0, duration: 0.3, onComplete: () => {
+            // Turunkan index, pergi ke ujung jika kurang dari 0
+            this.flashIndex = (this.flashIndex - 1 + this.activeData.length) % this.activeData.length;
+            this.loadCardToUI();
             
-            if(this.activeData.length === 0) {
-                this.showToast("Luar biasa! Semua dikuasai.", "success");
-                return setTimeout(() => this.navigate('view-dashboard'), 1500);
-            }
-            gsap.to(".card-3d", { y: -500, opacity: 0, duration: 0.5, onComplete: () => this.loadCardToUI() });
-        } else {
-            gsap.to(".card-3d", { x: -300, opacity: 0, duration: 0.3, onComplete: () => {
-                gsap.set(".card-3d", { x: 300 }); 
-                this.loadCardToUI();
-                gsap.to(".card-3d", { x: 0, duration: 0.4, ease: "power2.out" });
-            }});
-        }
+            // Set posisi awal di kiri, lalu masuk dengan opacity 1 (FIXED)
+            gsap.set(".card-3d", { x: -300 });
+            gsap.to(".card-3d", { x: 0, opacity: 1, duration: 0.4, ease: "power2.out" });
+        }});
     },
 
     // ==========================================
@@ -240,6 +241,7 @@ const KotobaApp = {
     // ==========================================
     openDictionary() {
         if (!this.isDataReady) return this.showToast("Sedang memuat data...", "info");
+        // Hapus peringatan lama, langsung navigasi dan jalankan render
         this.navigate('view-dictionary');
         this.renderDictionary();
     },
@@ -275,14 +277,14 @@ const KotobaApp = {
     toggleMastered(id) {
         let masteredIds = JSON.parse(localStorage.getItem('kotoba_mastered')) || [];
         if (masteredIds.includes(id)) {
-            masteredIds = masteredIds.filter(x => x !== id); // Hapus
+            masteredIds = masteredIds.filter(x => x !== id); // Hapus (jadi belum hafal)
         } else {
-            masteredIds.push(id); // Tambah
+            masteredIds.push(id); // Tambah (jadi sudah hafal)
         }
         localStorage.setItem('kotoba_mastered', JSON.stringify(masteredIds));
         
         this.refreshActiveData();
-        this.renderDictionary(); // Render ulang agar UI berubah seketika
+        this.renderDictionary(); // Render ulang agar UI seketika berubah
         this.playSound('click');
         this.haptic([40]);
     },
